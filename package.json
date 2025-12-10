@@ -1,0 +1,18 @@
+{
+  "name": "@poppod/three-mesh-merger-workspace",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Monorepo for three-mesh-merger library and examples",
+  "scripts": {
+    "build": "pnpm -r build",
+    "dev": "pnpm --filter example-vite dev",
+    "build:core": "pnpm --filter @poppod/three-mesh-merger build",
+    "build:example": "pnpm --filter example-vite build"
+  },
+  "keywords": ["three.js", "3d", "mesh", "merge", "glb", "texture-atlas"],
+  "author": "poppod",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  }
+}

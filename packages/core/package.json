@@ -1,0 +1,58 @@
+{
+  "name": "@poppod/three-mesh-merger",
+  "version": "0.1.0",
+  "description": "TypeScript library for merging multiple 3D GLB files with texture atlas support",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "dev": "vite build --watch",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "keywords": [
+    "three.js",
+    "3d",
+    "mesh",
+    "merge",
+    "glb",
+    "gltf",
+    "texture-atlas",
+    "geometry",
+    "optimization",
+    "webgl",
+    "typescript"
+  ],
+  "author": "poppod",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/poppod/three-mesh-merger"
+  },
+  "peerDependencies": {
+    "three": ">=0.150.0"
+  },
+  "dependencies": {
+    "potpack": "^2.0.0"
+  },
+  "devDependencies": {
+    "@types/three": "^0.160.0",
+    "three": "^0.160.0",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.0",
+    "vite-plugin-dts": "^3.7.0"
+  }
+}
