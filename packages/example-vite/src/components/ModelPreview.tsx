@@ -1,4 +1,4 @@
-import { useRef, useEffect, useMemo, useState } from "react";
+import { useRef, useMemo, useState } from "react";
 import { useCursor } from "@react-three/drei";
 import type { MeshMerger } from "@poppod/three-mesh-merger";
 
@@ -19,9 +19,8 @@ export function ModelPreview({
   isMerged,
   onSelect,
   selectedModelId,
-  transformMode,
+  transformMode: _transformMode,
   onModeChange,
-  onObjectRef,
 }: ModelPreviewProps) {
   const clonedObjectsRef = useRef<Map<string, any>>(new Map());
   const [hovered, setHovered] = useState<string | null>(null);
@@ -110,9 +109,9 @@ export function ModelPreview({
               }}
               // Right click cycles through the transform modes
               onContextMenu={(e: any) => {
-                if (selectedModelId === id && onModeChange && transformMode) {
+                if (selectedModelId === id && onModeChange && _transformMode) {
                   e.stopPropagation();
-                  const currentIndex = modes.indexOf(transformMode);
+                  const currentIndex = modes.indexOf(_transformMode);
                   const nextMode = modes[(currentIndex + 1) % modes.length];
                   onModeChange(nextMode);
                 }

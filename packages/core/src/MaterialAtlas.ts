@@ -41,6 +41,21 @@ export class MaterialAtlas {
   ): Promise<AtlasResult> {
     const { atlasSize, quality, atlasMode, materialOverrides } = options;
 
+    console.log("MaterialAtlas.generate:", {
+      materialsCount: materials.length,
+      materialMappingSize: materialMapping.size,
+      atlasSize,
+    });
+
+    // Verify that all materials are in the mapping
+    materials.forEach((mat, i) => {
+      const hasMapping = materialMapping.has(mat);
+      const triangleCount = materialMapping.get(mat)?.length || 0;
+      console.log(
+        `Material ${i}: hasMapping=${hasMapping}, triangles=${triangleCount}`
+      );
+    });
+
     // Extract textures by type
     const texturesByType = this.extractTexturesByType(materials, atlasMode);
 
@@ -215,24 +230,32 @@ export class MaterialAtlas {
     textures: THREE.Texture[],
     atlasSize: number
   ): PackBox[] {
-    const boxes: PackBox[] = textures.map((texture) => {
+    const boxes: PackBox[] = textures.map((texture, index) => {
       const image = texture.image as HTMLImageElement | HTMLCanvasElement;
-      return {
-        w: image.width || 1,
-        h: image.height || 1,
-      };
+      const w = image.width || 256;
+      const h = image.height || 256;
+      console.log(`Texture ${index} original size:`, { w, h });
+      return { w, h };
     });
 
     const { w, h } = potpack(boxes);
+    console.log("Potpack result:", { w, h });
 
     // Scale to fit atlas size
     const scale = Math.min(atlasSize / w, atlasSize / h);
+    console.log("Scale factor:", scale);
 
-    boxes.forEach((box) => {
+    boxes.forEach((box, index) => {
+      const originalW = box.w;
+      const originalH = box.h;
       box.w = Math.floor(box.w * scale);
       box.h = Math.floor(box.h * scale);
       box.x = Math.floor((box.x || 0) * scale);
       box.y = Math.floor((box.y || 0) * scale);
+      console.log(`Box ${index} after scale:`, {
+        original: { w: originalW, h: originalH },
+        scaled: { x: box.x, y: box.y, w: box.w, h: box.h },
+      });
     });
 
     return boxes;
@@ -262,6 +285,7 @@ export class MaterialAtlas {
     ctx.fillRect(0, 0, atlasSize, atlasSize);
 
     // Draw each texture to packed position
+    // Using canvas coordinate system (Y=0 at top)
     textures.forEach((texture, index) => {
       const box = layout[index];
       if (box.x === undefined || box.y === undefined) return;
@@ -283,13 +307,16 @@ export class MaterialAtlas {
 
       const resized = resizeCanvas(sourceCanvas, box.w, box.h);
 
+      // Draw at the packed position (no flip needed - we'll use flipY=false on texture)
       ctx.drawImage(resized, box.x, box.y);
     });
 
     // Convert to texture
     const atlasTexture = canvasToTexture(canvas);
-    atlasTexture.encoding = THREE.sRGBEncoding;
+    atlasTexture.colorSpace = THREE.SRGBColorSpace;
     atlasTexture.generateMipmaps = true;
+    // Use flipY=false so UV coordinates match canvas coordinates directly
+    atlasTexture.flipY = false;
 
     return atlasTexture;
   }
@@ -313,29 +340,50 @@ export class MaterialAtlas {
 
     const uvArray = uvAttribute.array as Float32Array;
 
+    console.log("UV remapping debug:", {
+      totalUVs: uvArray.length / 2,
+      materialsCount: materials.length,
+      layoutCount: layout.length,
+    });
+
     materials.forEach((material, materialIndex) => {
       const triangleIndices = materialMapping.get(material);
-      if (!triangleIndices) return;
+      if (!triangleIndices) {
+        console.log(`Material ${materialIndex}: no triangle indices`);
+        return;
+      }
 
       const box = layout[materialIndex];
-      if (box.x === undefined || box.y === undefined) return;
+      if (box.x === undefined || box.y === undefined) {
+        console.log(`Material ${materialIndex}: no box position`);
+        return;
+      }
+
+      console.log(`Material ${materialIndex}:`, {
+        triangleCount: triangleIndices.length,
+        box: { x: box.x, y: box.y, w: box.w, h: box.h },
+      });
 
       // Calculate UV transform
+      // With flipY=false on texture, UV coordinates match canvas coordinates directly
+      // UV (0,0) = top-left of texture, same as canvas
       const scaleX = box.w / atlasSize;
       const scaleY = box.h / atlasSize;
       const offsetX = box.x / atlasSize;
       const offsetY = box.y / atlasSize;
 
-      // Update UVs for each triangle
+      // Update UVs for each triangle (3 vertices per triangle)
       triangleIndices.forEach((triangleIndex) => {
-        const vertexIndex = triangleIndex * 3;
-
+        // Each triangle has 3 vertices
         for (let i = 0; i < 3; i++) {
-          const uvIndex = (vertexIndex + i) * 2;
+          const vertexIndex = triangleIndex * 3 + i;
+          const uvIndex = vertexIndex * 2;
 
-          // Transform UV: new_uv = (old_uv * scale) + offset
-          uvArray[uvIndex] = uvArray[uvIndex] * scaleX + offsetX;
-          uvArray[uvIndex + 1] = uvArray[uvIndex + 1] * scaleY + offsetY;
+          if (uvIndex + 1 < uvArray.length) {
+            // Transform UV: new_uv = (old_uv * scale) + offset
+            uvArray[uvIndex] = uvArray[uvIndex] * scaleX + offsetX;
+            uvArray[uvIndex + 1] = uvArray[uvIndex + 1] * scaleY + offsetY;
+          }
         }
       });
     });

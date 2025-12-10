@@ -1,34 +1,34 @@
-import * as THREE from 'three'
-import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js'
-import { ModelLoader } from './ModelLoader'
-import { GeometryMerger } from './GeometryMerger'
-import { MaterialAtlas } from './MaterialAtlas'
+import * as THREE from "three";
+import { GLTFExporter } from "three/examples/jsm/exporters/GLTFExporter.js";
+import { ModelLoader } from "./ModelLoader";
+import { GeometryMerger } from "./GeometryMerger";
+import { MaterialAtlas } from "./MaterialAtlas";
 import type {
   Transform,
   ModelInstance,
   MergeOptions,
   ProgressCallback,
   AtlasMode,
-  MaterialOverrides
-} from './types'
-import { generateId, mergeTransform } from './utils/mathUtils'
+  MaterialOverrides,
+} from "./types";
+import { generateId, mergeTransform } from "./utils/mathUtils";
 
 /**
  * Main class for merging multiple 3D models
  */
 export class MeshMerger {
-  private models: Map<string, ModelInstance> = new Map()
-  private modelLoader: ModelLoader
-  private geometryMerger: GeometryMerger
-  private materialAtlas: MaterialAtlas
-  private onProgress?: ProgressCallback
-  private mergedScene?: THREE.Scene
-  private mergedMesh?: THREE.Mesh
+  private models: Map<string, ModelInstance> = new Map();
+  private modelLoader: ModelLoader;
+  private geometryMerger: GeometryMerger;
+  private materialAtlas: MaterialAtlas;
+  private onProgress?: ProgressCallback;
+  private mergedScene?: THREE.Scene;
+  private mergedMesh?: THREE.Mesh;
 
   constructor() {
-    this.modelLoader = new ModelLoader()
-    this.geometryMerger = new GeometryMerger()
-    this.materialAtlas = new MaterialAtlas()
+    this.modelLoader = new ModelLoader();
+    this.geometryMerger = new GeometryMerger();
+    this.materialAtlas = new MaterialAtlas();
   }
 
   /**
@@ -38,41 +38,41 @@ export class MeshMerger {
     source: string | Blob,
     transform?: Transform
   ): Promise<string> {
-    this.reportProgress('Loading model', 0)
+    this.reportProgress("Loading model", 0);
 
     const scene =
-      typeof source === 'string'
+      typeof source === "string"
         ? await this.modelLoader.load(source)
-        : await this.modelLoader.loadFromBlob(source)
+        : await this.modelLoader.loadFromBlob(source);
 
-    const id = generateId()
-    const url = typeof source === 'string' ? source : 'blob'
+    const id = generateId();
+    const url = typeof source === "string" ? source : "blob";
 
     this.models.set(id, {
       id,
       url,
       scene,
-      transform: mergeTransform(transform)
-    })
+      transform: mergeTransform(transform),
+    });
 
-    this.reportProgress('Model loaded', 1)
+    this.reportProgress("Model loaded", 1);
 
-    return id
+    return id;
   }
 
   /**
    * Update transform for a model
    */
   updateTransform(id: string, transform: Partial<Transform>): void {
-    const model = this.models.get(id)
+    const model = this.models.get(id);
     if (!model) {
-      throw new Error(`Model with id ${id} not found`)
+      throw new Error(`Model with id ${id} not found`);
     }
 
     model.transform = mergeTransform({
       ...model.transform,
-      ...transform
-    })
+      ...transform,
+    });
   }
 
   /**
@@ -80,24 +80,24 @@ export class MeshMerger {
    */
   removeModel(id: string): void {
     if (!this.models.has(id)) {
-      throw new Error(`Model with id ${id} not found`)
+      throw new Error(`Model with id ${id} not found`);
     }
 
-    this.models.delete(id)
+    this.models.delete(id);
   }
 
   /**
    * Get all models
    */
   getModels(): ModelInstance[] {
-    return Array.from(this.models.values())
+    return Array.from(this.models.values());
   }
 
   /**
    * Get a specific model by ID
    */
   getModel(id: string): ModelInstance | undefined {
-    return this.models.get(id)
+    return this.models.get(id);
   }
 
   /**
@@ -105,30 +105,27 @@ export class MeshMerger {
    */
   async merge(options?: MergeOptions): Promise<void> {
     if (this.models.size === 0) {
-      throw new Error('No models to merge')
+      throw new Error("No models to merge");
     }
 
-    const mergeOptions = this.getMergeOptions(options)
+    const mergeOptions = this.getMergeOptions(options);
 
-    this.reportProgress('Starting merge', 0)
+    this.reportProgress("Starting merge", 0);
 
     // Get scenes and transforms
-    const modelList = Array.from(this.models.values())
-    const scenes = modelList.map((m) => m.scene)
-    const transforms = modelList.map((m) => m.transform)
+    const modelList = Array.from(this.models.values());
+    const scenes = modelList.map((m) => m.scene);
+    const transforms = modelList.map((m) => m.transform);
 
     // Merge geometries
-    this.reportProgress('Merging geometries', 0.2)
-    const { geometry, materialMapping } = this.geometryMerger.merge(
+    this.reportProgress("Merging geometries", 0.2);
+    const { geometry, materials, materialMapping } = this.geometryMerger.merge(
       scenes,
       transforms
-    )
-
-    // Get all unique materials
-    const materials = this.geometryMerger.getMaterials(scenes)
+    );
 
     // Generate texture atlas
-    this.reportProgress('Generating texture atlas', 0.5)
+    this.reportProgress("Generating texture atlas", 0.5);
     const atlasResult = await this.materialAtlas.generate(
       materials,
       materialMapping,
@@ -137,20 +134,29 @@ export class MeshMerger {
         atlasSize: mergeOptions.atlasSize,
         quality: mergeOptions.textureQuality,
         atlasMode: mergeOptions.atlasMode as Required<AtlasMode>,
-        materialOverrides: mergeOptions.materialOverrides
+        materialOverrides: mergeOptions.materialOverrides,
       }
-    )
+    );
 
     // Create merged mesh
-    this.reportProgress('Creating merged mesh', 0.8)
-    this.mergedMesh = new THREE.Mesh(geometry, atlasResult.material)
-    this.mergedMesh.name = 'MergedMesh'
+    this.reportProgress("Creating merged mesh", 0.8);
+
+    // Debug: Check if geometry has data
+    console.log("Merged geometry info:", {
+      vertexCount: geometry.attributes.position?.count || 0,
+      hasUV: !!geometry.attributes.uv,
+      hasNormal: !!geometry.attributes.normal,
+      materialCount: materials.length,
+    });
+
+    this.mergedMesh = new THREE.Mesh(geometry, atlasResult.material);
+    this.mergedMesh.name = "MergedMesh";
 
     // Create merged scene
-    this.mergedScene = new THREE.Scene()
-    this.mergedScene.add(this.mergedMesh)
+    this.mergedScene = new THREE.Scene();
+    this.mergedScene.add(this.mergedMesh);
 
-    this.reportProgress('Merge complete', 1)
+    this.reportProgress("Merge complete", 1);
   }
 
   /**
@@ -158,73 +164,99 @@ export class MeshMerger {
    */
   async export(): Promise<Blob> {
     if (!this.mergedScene) {
-      throw new Error('No merged model to export. Call merge() first.')
+      throw new Error("No merged model to export. Call merge() first.");
     }
 
-    this.reportProgress('Exporting GLB', 0)
+    // Debug: Check merged mesh before export
+    console.log("Export - Merged mesh info:", {
+      hasMesh: !!this.mergedMesh,
+      geometry: this.mergedMesh?.geometry,
+      vertexCount: this.mergedMesh?.geometry?.attributes?.position?.count || 0,
+      material: this.mergedMesh?.material,
+    });
+
+    // Debug: Check scene children
+    console.log("Export - Scene children:", this.mergedScene.children.length);
+    this.mergedScene.traverse((obj) => {
+      console.log("  - Object:", obj.type, obj.name);
+    });
+
+    this.reportProgress("Exporting GLB", 0);
 
     return new Promise((resolve, reject) => {
-      const exporter = new GLTFExporter()
+      const exporter = new GLTFExporter();
+
+      // Export the mesh directly instead of the scene
+      const objectToExport = this.mergedMesh || this.mergedScene!;
 
       exporter.parse(
-        this.mergedScene!,
+        objectToExport,
         (result) => {
+          console.log(
+            "Export result size:",
+            (result as ArrayBuffer).byteLength
+          );
           const blob = new Blob([result as ArrayBuffer], {
-            type: 'model/gltf-binary'
-          })
-          this.reportProgress('Export complete', 1)
-          resolve(blob)
+            type: "model/gltf-binary",
+          });
+          this.reportProgress("Export complete", 1);
+          resolve(blob);
         },
         (error) => {
-          reject(new Error(`Export failed: ${error}`))
+          console.error("Export error:", error);
+          reject(new Error(`Export failed: ${error}`));
         },
         { binary: true }
-      )
-    })
+      );
+    });
   }
 
   /**
    * Get the merged scene (for preview)
    */
   getMergedScene(): THREE.Scene | undefined {
-    return this.mergedScene
+    return this.mergedScene;
   }
 
   /**
    * Get the merged mesh (for preview)
    */
   getMergedMesh(): THREE.Mesh | undefined {
-    return this.mergedMesh
+    return this.mergedMesh;
   }
 
   /**
    * Set progress callback
    */
   setProgressCallback(callback: ProgressCallback): void {
-    this.onProgress = callback
+    this.onProgress = callback;
   }
 
   /**
    * Clear all models and merged result
    */
   clear(): void {
-    this.models.clear()
-    this.mergedScene = undefined
-    this.mergedMesh = undefined
+    this.models.clear();
+    this.mergedScene = undefined;
+    this.mergedMesh = undefined;
   }
 
   /**
    * Get merge options with defaults
    */
-  private getMergeOptions(options?: MergeOptions): Required<Omit<MergeOptions, 'materialOverrides'>> & { materialOverrides?: MaterialOverrides } {
+  private getMergeOptions(options?: MergeOptions): Required<
+    Omit<MergeOptions, "materialOverrides">
+  > & {
+    materialOverrides?: MaterialOverrides;
+  } {
     const defaultAtlasMode: Required<AtlasMode> = {
       albedo: true,
       normal: false,
       roughness: false,
       metalness: false,
       emissive: false,
-      aoMap: false
-    }
+      aoMap: false,
+    };
 
     return {
       atlasSize: options?.atlasSize ?? 2048,
@@ -232,10 +264,10 @@ export class MeshMerger {
       generateMipmaps: options?.generateMipmaps ?? true,
       atlasMode: {
         ...defaultAtlasMode,
-        ...options?.atlasMode
+        ...options?.atlasMode,
       } as Required<AtlasMode>,
-      materialOverrides: options?.materialOverrides
-    }
+      materialOverrides: options?.materialOverrides,
+    };
   }
 
   /**
@@ -243,7 +275,7 @@ export class MeshMerger {
    */
   private reportProgress(stage: string, progress: number): void {
     if (this.onProgress) {
-      this.onProgress(stage, progress)
+      this.onProgress(stage, progress);
     }
   }
 }

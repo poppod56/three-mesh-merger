@@ -67,10 +67,11 @@ export function canvasToTexture(canvas: HTMLCanvasElement): THREE.Texture {
 
 /**
  * Create a solid color texture of specified size
+ * Default size is 256 to ensure proper atlas packing
  */
 export function createSolidColorTexture(
   color: THREE.Color,
-  size: number = 1
+  size: number = 256
 ): THREE.Texture {
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d");
@@ -90,10 +91,11 @@ export function createSolidColorTexture(
 
 /**
  * Create a solid grayscale texture for roughness/metalness maps
+ * Default size is 256 to ensure proper atlas packing
  */
 export function createSolidGrayscaleTexture(
   value: number,
-  size: number = 1
+  size: number = 256
 ): THREE.Texture {
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d");

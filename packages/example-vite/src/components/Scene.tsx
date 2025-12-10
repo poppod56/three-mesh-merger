@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState, useCallback } from "react";
+import { useRef, useEffect, useState } from "react";
 import { Canvas, useThree, useFrame } from "@react-three/fiber";
 import {
   OrbitControls,
@@ -10,8 +10,6 @@ import { ModelPreview } from "./ModelPreview";
 import type { MeshMerger, Transform } from "@poppod/three-mesh-merger";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import type { Object3D } from "three";
-
-const modes = ["translate", "rotate", "scale"] as const;
 
 interface SceneProps {
   merger: MeshMerger;
