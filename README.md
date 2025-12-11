@@ -1,5 +1,9 @@
 # @poppod/three-mesh-merger
 
+[![npm version](https://img.shields.io/npm/v/@poppod/three-mesh-merger.svg)](https://www.npmjs.com/package/@poppod/three-mesh-merger)
+[![npm downloads](https://img.shields.io/npm/dm/@poppod/three-mesh-merger.svg)](https://www.npmjs.com/package/@poppod/three-mesh-merger)
+[![license](https://img.shields.io/npm/l/@poppod/three-mesh-merger.svg)](https://github.com/poppod56/three-mesh-merger/blob/main/LICENSE)
+
 A TypeScript library for merging multiple 3D GLB files into a single optimized mesh with texture atlas support.
 
 ## Features
@@ -90,6 +94,15 @@ pnpm build
 - Modern browser with WebGL support
 - TypeScript (recommended)
 
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## Links
+
+- [GitHub Repository](https://github.com/poppod56/three-mesh-merger)
+- [npm Package](https://www.npmjs.com/package/@poppod/three-mesh-merger)
+
 ## License
 
-MIT © poppod
+MIT © [poppod](https://github.com/poppod56)
