@@ -36,20 +36,20 @@ yarn add @poppod/three-mesh-merger three
 ## Quick Start
 
 ```typescript
-import { MeshMerger } from '@poppod/three-mesh-merger'
+import { MeshMerger } from "@poppod/three-mesh-merger";
 
 // Create merger instance
-const merger = new MeshMerger()
+const merger = new MeshMerger();
 
 // Add models with transforms
-const cube = await merger.addModel('/models/cube.glb', {
-  position: [0, 0, 0]
-})
+const cube = await merger.addModel("/models/cube.glb", {
+  position: [0, 0, 0],
+});
 
-const sphere = await merger.addModel('/models/sphere.glb', {
+const sphere = await merger.addModel("/models/sphere.glb", {
   position: [2, 0, 0],
-  scale: [0.5, 0.5, 0.5]
-})
+  scale: [0.5, 0.5, 0.5],
+});
 
 // Merge with options
 await merger.merge({
@@ -58,13 +58,13 @@ await merger.merge({
   atlasMode: {
     albedo: true,
     normal: true,
-    roughness: true
-  }
-})
+    roughness: true,
+  },
+});
 
 // Export as GLB
-const blob = await merger.export()
-const url = URL.createObjectURL(blob)
+const blob = await merger.export();
+const url = URL.createObjectURL(blob);
 // Download or use the merged GLB
 ```
 
@@ -81,14 +81,15 @@ Main class for merging 3D models.
 Add a model from URL or Blob.
 
 ```typescript
-const id = await merger.addModel('/model.glb', {
+const id = await merger.addModel("/model.glb", {
   position: [0, 1, 0],
   rotation: [0, Math.PI / 4, 0],
-  scale: [1, 1, 1]
-})
+  scale: [1, 1, 1],
+});
 ```
 
 **Parameters:**
+
 - `source`: URL string or Blob/File object
 - `transform` (optional): Initial transform
 
@@ -100,8 +101,8 @@ Update transform for a specific model.
 
 ```typescript
 merger.updateTransform(id, {
-  position: [1, 0, 0]
-})
+  position: [1, 0, 0],
+});
 ```
 
 ##### `removeModel(id: string): void`
@@ -109,7 +110,7 @@ merger.updateTransform(id, {
 Remove a model from the merger.
 
 ```typescript
-merger.removeModel(id)
+merger.removeModel(id);
 ```
 
 ##### `getModels(): ModelInstance[]`
@@ -117,7 +118,7 @@ merger.removeModel(id)
 Get all loaded models.
 
 ```typescript
-const models = merger.getModels()
+const models = merger.getModels();
 ```
 
 ##### `getModel(id: string): ModelInstance | undefined`
@@ -125,7 +126,7 @@ const models = merger.getModels()
 Get a specific model by ID.
 
 ```typescript
-const model = merger.getModel(id)
+const model = merger.getModel(id);
 ```
 
 ##### `merge(options?: MergeOptions): Promise<void>`
@@ -140,13 +141,13 @@ await merger.merge({
     albedo: true,
     normal: true,
     roughness: true,
-    metalness: true
+    metalness: true,
   },
   materialOverrides: {
     roughness: 0.5,
-    metalness: 0.8
-  }
-})
+    metalness: 0.8,
+  },
+});
 ```
 
 ##### `export(): Promise<Blob>`
@@ -154,14 +155,14 @@ await merger.merge({
 Export merged result as GLB Blob.
 
 ```typescript
-const blob = await merger.export()
-const url = URL.createObjectURL(blob)
+const blob = await merger.export();
+const url = URL.createObjectURL(blob);
 
 // Download
-const link = document.createElement('a')
-link.href = url
-link.download = 'merged.glb'
-link.click()
+const link = document.createElement("a");
+link.href = url;
+link.download = "merged.glb";
+link.click();
 ```
 
 ##### `getMergedScene(): THREE.Scene | undefined`
@@ -178,8 +179,8 @@ Set progress callback for merge operations.
 
 ```typescript
 merger.setProgressCallback((stage, progress) => {
-  console.log(`${stage}: ${progress * 100}%`)
-})
+  console.log(`${stage}: ${progress * 100}%`);
+});
 ```
 
 ##### `clear(): void`
@@ -187,7 +188,7 @@ merger.setProgressCallback((stage, progress) => {
 Clear all models and merged result.
 
 ```typescript
-merger.clear()
+merger.clear();
 ```
 
 ### Types
@@ -196,9 +197,9 @@ merger.clear()
 
 ```typescript
 interface Transform {
-  position?: [number, number, number]
-  rotation?: [number, number, number] // Euler angles in radians
-  scale?: [number, number, number]
+  position?: [number, number, number];
+  rotation?: [number, number, number]; // Euler angles in radians
+  scale?: [number, number, number];
 }
 ```
 
@@ -206,11 +207,11 @@ interface Transform {
 
 ```typescript
 interface MergeOptions {
-  atlasSize?: number // Default: 2048
-  textureQuality?: number // 0-1, Default: 0.9
-  generateMipmaps?: boolean // Default: true
-  atlasMode?: AtlasMode
-  materialOverrides?: MaterialOverrides
+  atlasSize?: number; // Default: 2048
+  textureQuality?: number; // 0-1, Default: 0.9
+  generateMipmaps?: boolean; // Default: true
+  atlasMode?: AtlasMode;
+  materialOverrides?: MaterialOverrides;
 }
 ```
 
@@ -218,12 +219,12 @@ interface MergeOptions {
 
 ```typescript
 interface AtlasMode {
-  albedo?: boolean // Default: true
-  normal?: boolean // Default: false
-  roughness?: boolean // Default: false
-  metalness?: boolean // Default: false
-  emissive?: boolean // Default: false
-  aoMap?: boolean // Default: false
+  albedo?: boolean; // Default: true
+  normal?: boolean; // Default: false
+  roughness?: boolean; // Default: false
+  metalness?: boolean; // Default: false
+  emissive?: boolean; // Default: false
+  aoMap?: boolean; // Default: false
 }
 ```
 
@@ -231,18 +232,18 @@ interface AtlasMode {
 
 ```typescript
 interface MaterialOverrides {
-  roughness?: number
-  metalness?: number
-  color?: number | string // THREE.Color compatible
-  emissive?: number | string
-  emissiveIntensity?: number
+  roughness?: number;
+  metalness?: number;
+  color?: number | string; // THREE.Color compatible
+  emissive?: number | string;
+  emissiveIntensity?: number;
 }
 ```
 
 #### `ProgressCallback`
 
 ```typescript
-type ProgressCallback = (stage: string, progress: number) => void
+type ProgressCallback = (stage: string, progress: number) => void;
 ```
 
 ## Usage with Frameworks
@@ -250,34 +251,34 @@ type ProgressCallback = (stage: string, progress: number) => void
 ### React
 
 ```tsx
-import { MeshMerger } from '@poppod/three-mesh-merger'
-import { useEffect, useRef } from 'react'
+import { MeshMerger } from "@poppod/three-mesh-merger";
+import { useEffect, useRef } from "react";
 
 function MyComponent() {
-  const mergerRef = useRef(new MeshMerger())
+  const mergerRef = useRef(new MeshMerger());
 
   const handleMerge = async () => {
-    await mergerRef.current.addModel('/model1.glb')
-    await mergerRef.current.addModel('/model2.glb')
-    await mergerRef.current.merge()
-    const blob = await mergerRef.current.export()
+    await mergerRef.current.addModel("/model1.glb");
+    await mergerRef.current.addModel("/model2.glb");
+    await mergerRef.current.merge();
+    const blob = await mergerRef.current.export();
     // Handle blob
-  }
+  };
 
-  return <button onClick={handleMerge}>Merge</button>
+  return <button onClick={handleMerge}>Merge</button>;
 }
 ```
 
 ### Next.js
 
 ```tsx
-'use client'
+"use client";
 
-import { MeshMerger } from '@poppod/three-mesh-merger'
-import { useState } from 'react'
+import { MeshMerger } from "@poppod/three-mesh-merger";
+import { useState } from "react";
 
 export default function MergePage() {
-  const [merger] = useState(() => new MeshMerger())
+  const [merger] = useState(() => new MeshMerger());
 
   // Your implementation
 }
@@ -287,17 +288,17 @@ export default function MergePage() {
 
 ```vue
 <script setup>
-import { MeshMerger } from '@poppod/three-mesh-merger'
-import { ref } from 'vue'
+import { MeshMerger } from "@poppod/three-mesh-merger";
+import { ref } from "vue";
 
-const merger = ref(new MeshMerger())
+const merger = ref(new MeshMerger());
 
 const handleMerge = async () => {
-  await merger.value.addModel('/model.glb')
-  await merger.value.merge()
-  const blob = await merger.value.export()
+  await merger.value.addModel("/model.glb");
+  await merger.value.merge();
+  const blob = await merger.value.export();
   // Handle blob
-}
+};
 </script>
 ```
 

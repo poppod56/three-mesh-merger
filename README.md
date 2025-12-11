@@ -29,20 +29,20 @@ yarn add @poppod/three-mesh-merger three
 ## Quick Start
 
 ```typescript
-import { MeshMerger } from '@poppod/three-mesh-merger'
+import { MeshMerger } from "@poppod/three-mesh-merger";
 
 // Create merger instance
-const merger = new MeshMerger()
+const merger = new MeshMerger();
 
 // Add models
-const id1 = await merger.addModel('/models/cube.glb', {
-  position: [0, 0, 0]
-})
+const id1 = await merger.addModel("/models/cube.glb", {
+  position: [0, 0, 0],
+});
 
-const id2 = await merger.addModel('/models/sphere.glb', {
+const id2 = await merger.addModel("/models/sphere.glb", {
   position: [2, 0, 0],
-  scale: [0.5, 0.5, 0.5]
-})
+  scale: [0.5, 0.5, 0.5],
+});
 
 // Merge with options
 await merger.merge({
@@ -51,12 +51,12 @@ await merger.merge({
   atlasMode: {
     albedo: true,
     normal: true,
-    roughness: true
-  }
-})
+    roughness: true,
+  },
+});
 
 // Export as GLB
-const blob = await merger.export()
+const blob = await merger.export();
 // Download or use the merged GLB
 ```
 
