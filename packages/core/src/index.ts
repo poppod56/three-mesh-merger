@@ -1,5 +1,9 @@
 // Main class
-export { MeshMerger } from './MeshMerger'
+export { MeshMerger } from "./MeshMerger";
+
+// Decal classes
+export { DecalManager } from "./DecalManager";
+export { DecalBaker } from "./DecalBaker";
 
 // Types
 export type {
@@ -8,5 +12,9 @@ export type {
   AtlasMode,
   MaterialOverrides,
   MergeOptions,
-  ProgressCallback
-} from './types'
+  ProgressCallback,
+  DecalInstance,
+  DecalOptions,
+  DecalBakeOptions,
+  UVProjection,
+} from "./types";

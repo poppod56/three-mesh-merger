@@ -3,6 +3,8 @@ import { GLTFExporter } from "three/examples/jsm/exporters/GLTFExporter.js";
 import { ModelLoader } from "./ModelLoader";
 import { GeometryMerger } from "./GeometryMerger";
 import { MaterialAtlas } from "./MaterialAtlas";
+import { DecalManager } from "./DecalManager";
+import { DecalBaker } from "./DecalBaker";
 import type {
   Transform,
   ModelInstance,
@@ -10,6 +12,8 @@ import type {
   ProgressCallback,
   AtlasMode,
   MaterialOverrides,
+  DecalInstance,
+  DecalOptions,
 } from "./types";
 import { generateId, mergeTransform } from "./utils/mathUtils";
 
@@ -21,6 +25,8 @@ export class MeshMerger {
   private modelLoader: ModelLoader;
   private geometryMerger: GeometryMerger;
   private materialAtlas: MaterialAtlas;
+  private decalManager: DecalManager;
+  private decalBaker: DecalBaker;
   private onProgress?: ProgressCallback;
   private mergedScene?: THREE.Scene;
   private mergedMesh?: THREE.Mesh;
@@ -29,6 +35,8 @@ export class MeshMerger {
     this.modelLoader = new ModelLoader();
     this.geometryMerger = new GeometryMerger();
     this.materialAtlas = new MaterialAtlas();
+    this.decalManager = new DecalManager();
+    this.decalBaker = new DecalBaker();
   }
 
   /**
@@ -100,6 +108,186 @@ export class MeshMerger {
     return this.models.get(id);
   }
 
+  // ==================== DECAL METHODS ====================
+
+  /**
+   * Add a decal to a model from texture URL
+   */
+  async addDecal(
+    targetModelId: string,
+    textureUrl: string,
+    options?: DecalOptions
+  ): Promise<string> {
+    if (!this.models.has(targetModelId)) {
+      throw new Error(`Model with id ${targetModelId} not found`);
+    }
+    return this.decalManager.addDecal(targetModelId, textureUrl, options);
+  }
+
+  /**
+   * Add a decal from existing THREE.Texture
+   */
+  addDecalFromTexture(
+    targetModelId: string,
+    texture: THREE.Texture,
+    options?: DecalOptions
+  ): string {
+    if (!this.models.has(targetModelId)) {
+      throw new Error(`Model with id ${targetModelId} not found`);
+    }
+    return this.decalManager.addDecalFromTexture(
+      targetModelId,
+      texture,
+      options
+    );
+  }
+
+  /**
+   * Update decal transform
+   */
+  updateDecalTransform(id: string, transform: Partial<Transform>): void {
+    this.decalManager.updateDecalTransform(id, transform);
+  }
+
+  /**
+   * Update decal opacity
+   */
+  updateDecalOpacity(id: string, opacity: number): void {
+    this.decalManager.updateDecalOpacity(id, opacity);
+  }
+
+  /**
+   * Remove a decal
+   */
+  removeDecal(id: string): void {
+    this.decalManager.removeDecal(id);
+  }
+
+  /**
+   * Get all decals
+   */
+  getDecals(): DecalInstance[] {
+    return this.decalManager.getDecals();
+  }
+
+  /**
+   * Get decals for a specific model
+   */
+  getDecalsForModel(modelId: string): DecalInstance[] {
+    return this.decalManager.getDecalsForModel(modelId);
+  }
+
+  /**
+   * Get a specific decal by ID
+   */
+  getDecal(id: string): DecalInstance | undefined {
+    return this.decalManager.getDecal(id);
+  }
+
+  /**
+   * Get the DecalManager instance (for advanced usage)
+   */
+  getDecalManager(): DecalManager {
+    return this.decalManager;
+  }
+
+  /**
+   * Get the DecalBaker instance (for advanced usage)
+   */
+  getDecalBaker(): DecalBaker {
+    return this.decalBaker;
+  }
+
+  // ==================== MERGE METHODS ====================
+
+  /**
+   * Collect mesh and material info from a model for decal baking
+   * Apply internal mesh transforms (from mesh to scene root) to match preview behavior
+   */
+  private collectModelMeshInfo(model: ModelInstance): {
+    mesh: THREE.Mesh | null;
+    material: THREE.Material | null;
+  } {
+    const scene = model.scene;
+
+    // Update matrices
+    scene.updateWorldMatrix(true, true);
+
+    // Find first mesh
+    let firstMesh: THREE.Mesh | null = null;
+    let firstMaterial: THREE.Material | null = null;
+
+    scene.traverse((object) => {
+      if (object instanceof THREE.Mesh && object.geometry && !firstMesh) {
+        firstMesh = object;
+        firstMaterial = object.material as THREE.Material;
+      }
+    });
+
+    if (!firstMesh) {
+      return { mesh: null, material: null };
+    }
+
+    const mesh = firstMesh as THREE.Mesh;
+
+    // Clone geometry
+    let geo = mesh.geometry.clone();
+
+    // Convert indexed to non-indexed
+    if (geo.index !== null) {
+      geo = geo.toNonIndexed();
+    }
+
+    // Ensure normals exist
+    if (!geo.attributes.normal) {
+      geo.computeVertexNormals();
+    }
+
+    // Apply internal transforms: from mesh local space to scene root space
+    // This matches what createMergedMeshFromGroup does in preview
+    // relativeMatrix = mesh.matrixWorld * sceneWorldMatrixInverse
+    // Since scene is root, scene.matrixWorld should be identity (or whatever GLTF set it to)
+    // So this effectively applies mesh.localMatrix and parent transforms within the model
+    const sceneWorldMatrixInverse = scene.matrixWorld.clone().invert();
+    const relativeMatrix = mesh.matrixWorld
+      .clone()
+      .premultiply(sceneWorldMatrixInverse);
+
+    console.log("collectModelMeshInfo internal transforms:", {
+      meshName: mesh.name,
+      hasInternalTransform: !relativeMatrix.equals(
+        new THREE.Matrix4().identity()
+      ),
+      relativeScale: new THREE.Vector3()
+        .setFromMatrixScale(relativeMatrix)
+        .toArray()
+        .map((v) => v.toFixed(4)),
+    });
+
+    geo.applyMatrix4(relativeMatrix);
+
+    // Debug: log bbox after transform
+    geo.computeBoundingBox();
+    const bbox = geo.boundingBox;
+    console.log("collectModelMeshInfo result:", {
+      bbox: bbox
+        ? {
+            min: `${bbox.min.x.toFixed(4)}, ${bbox.min.y.toFixed(
+              4
+            )}, ${bbox.min.z.toFixed(4)}`,
+            max: `${bbox.max.x.toFixed(4)}, ${bbox.max.y.toFixed(
+              4
+            )}, ${bbox.max.z.toFixed(4)}`,
+          }
+        : null,
+    });
+
+    // Create mesh with transformed geometry
+    const resultMesh = new THREE.Mesh(geo, firstMaterial!);
+
+    return { mesh: resultMesh, material: firstMaterial };
+  }
+
   /**
    * Merge all models
    */
@@ -117,14 +305,86 @@ export class MeshMerger {
     const scenes = modelList.map((m) => m.scene);
     const transforms = modelList.map((m) => m.transform);
 
+    // Collect model-to-material info before merge (for decal baking)
+    const modelMaterialMap = new Map<
+      string,
+      { mesh: THREE.Mesh; material: THREE.Material }
+    >();
+    modelList.forEach((model) => {
+      const info = this.collectModelMeshInfo(model);
+      if (info.mesh && info.material) {
+        modelMaterialMap.set(model.id, {
+          mesh: info.mesh,
+          material: info.material,
+        });
+      }
+    });
+
+    // ===== BAKE DECALS TO MODEL TEXTURES BEFORE ATLAS =====
+    this.reportProgress("Baking decals to model textures", 0.15);
+    const allDecals = this.decalManager.getDecals();
+
+    console.log("🔥🔥🔥 MERGE CALLED - allDecals count:", allDecals.length);
+
+    if (allDecals.length > 0) {
+      console.log("🎯🎯🎯 BAKING START:", allDecals.length, "decals");
+
+      // Group decals by target model
+      const decalsByModel = new Map<string, typeof allDecals>();
+      for (const decal of allDecals) {
+        const existing = decalsByModel.get(decal.targetModelId) || [];
+        existing.push(decal);
+        decalsByModel.set(decal.targetModelId, existing);
+      }
+
+      // Bake decals onto each model's texture
+      for (const [modelId, modelDecals] of decalsByModel) {
+        const meshInfo = modelMaterialMap.get(modelId);
+        if (!meshInfo) {
+          console.warn(`No mesh info for model ${modelId}, skipping decals`);
+          continue;
+        }
+
+        const material = meshInfo.material as THREE.MeshStandardMaterial;
+        if (!material.map) {
+          console.warn(`Model ${modelId} has no texture, skipping decals`);
+          continue;
+        }
+
+        console.log(
+          `Baking ${modelDecals.length} decals onto model ${modelId}`
+        );
+
+        // Bake decals using canvas with UV-based positioning
+        const bakedTexture = this.decalBaker.bakeDecalsToModelTexture(
+          meshInfo.mesh,
+          material,
+          modelDecals,
+          { targetTextureSize: options?.atlasSize || 2048 }
+        );
+
+        if (bakedTexture) {
+          // Update the material's texture with the baked version
+          const oldTexture = material.map;
+          material.map = bakedTexture;
+          material.needsUpdate = true;
+          console.log(`Decals baked to model ${modelId} texture`, {
+            oldTextureUUID: oldTexture?.uuid,
+            newTextureUUID: bakedTexture.uuid,
+            textureChanged: oldTexture?.uuid !== bakedTexture.uuid,
+          });
+        }
+      }
+    }
+
     // Merge geometries
-    this.reportProgress("Merging geometries", 0.2);
+    this.reportProgress("Merging geometries", 0.3);
     const { geometry, materials, materialMapping } = this.geometryMerger.merge(
       scenes,
       transforms
     );
 
-    // Generate texture atlas
+    // Generate texture atlas (now with decals already baked into model textures)
     this.reportProgress("Generating texture atlas", 0.5);
     const atlasResult = await this.materialAtlas.generate(
       materials,
@@ -237,6 +497,7 @@ export class MeshMerger {
    */
   clear(): void {
     this.models.clear();
+    this.decalManager.clear();
     this.mergedScene = undefined;
     this.mergedMesh = undefined;
   }

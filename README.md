@@ -10,6 +10,7 @@ A TypeScript library for merging multiple 3D GLB files into a single optimized m
 
 - 🎯 **Merge Multiple GLB Files** - Load and combine any number of 3D models
 - 🔄 **Independent Transforms** - Position, rotate, and scale each model before merging
+- 🎨 **Decal System** - Place customizable decals on models with transform controls, baked into texture on merge
 - 🖼️ **Flexible Texture Atlas** - Choose which texture maps to combine (albedo, normal, roughness, metalness, emissive)
 - ⚡ **Optimized Output** - Single mesh with single material for maximum performance
 - 🎨 **Material Customization** - Override material properties or use averaged values

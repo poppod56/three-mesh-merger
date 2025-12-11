@@ -7,9 +7,13 @@ import {
   TransformControls,
 } from "@react-three/drei";
 import { ModelPreview } from "./ModelPreview";
-import type { MeshMerger, Transform } from "@poppod/three-mesh-merger";
+import type {
+  MeshMerger,
+  Transform,
+  DecalInstance,
+} from "@poppod/three-mesh-merger";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
-import type { Object3D } from "three";
+import type { Object3D, Texture } from "three";
 
 interface SceneProps {
   merger: MeshMerger;
@@ -19,6 +23,22 @@ interface SceneProps {
   onModelSelect?: (id: string | undefined) => void;
   onTransformChange?: (id: string, transform: Partial<Transform>) => void;
   onModeChange?: (mode: "translate" | "rotate" | "scale") => void;
+  // Decal props
+  decals?: DecalInstance[];
+  selectedDecalId?: string;
+  isPlacingDecal?: boolean;
+  activeDecalTexture?: Texture | null;
+  stampScale?: number;
+  stampRotation?: number;
+  onPlaceDecal?: (
+    targetModelId: string,
+    position: [number, number, number],
+    normal: [number, number, number],
+    modelScale: number,
+    uv?: [number, number]
+  ) => void;
+  onSelectDecal?: (id: string | undefined) => void;
+  onDecalTransformChange?: (id: string, transform: Partial<Transform>) => void;
 }
 
 function Controls({
@@ -109,6 +129,13 @@ export function Scene({
   onModelSelect,
   onTransformChange,
   onModeChange,
+  // Decal props
+  decals = [],
+  isPlacingDecal,
+  activeDecalTexture,
+  stampScale,
+  stampRotation,
+  onPlaceDecal,
 }: SceneProps) {
   return (
     <Canvas camera={{ position: [5, 5, 5], fov: 50 }}>
@@ -139,6 +166,13 @@ export function Scene({
         transformMode={transformMode}
         onSelect={onModelSelect}
         onModeChange={onModeChange}
+        // Decal props
+        decals={decals}
+        isPlacingDecal={isPlacingDecal}
+        activeDecalTexture={activeDecalTexture}
+        stampScale={stampScale}
+        stampRotation={stampRotation}
+        onPlaceDecal={onPlaceDecal}
       />
 
       {/* Controls - must be after models so it can find them in the scene */}

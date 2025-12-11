@@ -25,6 +25,15 @@ interface PackBox {
  * Handles texture atlas generation and UV remapping
  */
 export class MaterialAtlas {
+  private lastPackingLayout: PackBox[] | null = null;
+
+  /**
+   * Get the last packing layout (for decal baking)
+   */
+  getLastPackingLayout(): PackBox[] | null {
+    return this.lastPackingLayout;
+  }
+
   /**
    * Generate texture atlases and merged material
    */
@@ -64,6 +73,9 @@ export class MaterialAtlas {
       texturesByType.albedo || [],
       atlasSize
     );
+
+    // Store for decal baking
+    this.lastPackingLayout = packingLayout;
 
     // Create atlases for each enabled map type
     const result: AtlasResult = {
@@ -169,11 +181,17 @@ export class MaterialAtlas {
 
       if (atlasMode.albedo) {
         if (!result.albedo) result.albedo = [];
-        result.albedo.push(
-          extractTexture(mat, "map", () =>
-            createSolidColorTexture(mat.color || new THREE.Color(1, 1, 1))
-          )
+        const albedoTexture = extractTexture(mat, "map", () =>
+          createSolidColorTexture(mat.color || new THREE.Color(1, 1, 1))
         );
+        console.log("MaterialAtlas extracting albedo texture:", {
+          materialName: mat.name,
+          textureUUID: albedoTexture.uuid,
+          textureSize: albedoTexture.image
+            ? `${albedoTexture.image.width}x${albedoTexture.image.height}`
+            : "no image",
+        });
+        result.albedo.push(albedoTexture);
       }
 
       if (atlasMode.normal) {

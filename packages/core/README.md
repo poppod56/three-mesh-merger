@@ -10,6 +10,7 @@ A powerful TypeScript library for merging multiple 3D GLB files into a single op
 
 - 🎯 **Merge Multiple GLB Files** - Combine any number of 3D models into a single mesh
 - 🔄 **Independent Transforms** - Position, rotate, and scale each model before merging
+- 🎨 **Decal System** - Place customizable decals on models with transform controls
 - 🖼️ **Flexible Texture Atlas** - Choose which texture maps to combine:
   - Albedo/Color maps
   - Normal maps
@@ -129,6 +130,86 @@ Get a specific model by ID.
 const model = merger.getModel(id);
 ```
 
+### Decal Methods
+
+##### `addDecal(targetModelId: string, textureUrl: string, options?: DecalOptions): Promise<string>`
+
+Add a decal to a model from texture URL.
+
+```typescript
+const decalId = await merger.addDecal(modelId, "/decals/logo.png", {
+  position: [0, 1, 0],
+  rotation: [0, 0, 0],
+  scale: [0.5, 0.5, 0.5],
+  opacity: 1,
+});
+```
+
+##### `addDecalFromTexture(targetModelId: string, texture: THREE.Texture, options?: DecalOptions): string`
+
+Add a decal from existing THREE.Texture.
+
+```typescript
+const texture = new THREE.TextureLoader().load("/decals/logo.png");
+const decalId = merger.addDecalFromTexture(modelId, texture, {
+  position: [0, 1, 0],
+  scale: [0.5, 0.5, 0.5],
+});
+```
+
+##### `updateDecalTransform(id: string, transform: Partial<Transform>): void`
+
+Update decal transform.
+
+```typescript
+merger.updateDecalTransform(decalId, {
+  position: [1, 1, 0],
+  rotation: [0, Math.PI / 4, 0],
+});
+```
+
+##### `updateDecalOpacity(id: string, opacity: number): void`
+
+Update decal opacity.
+
+```typescript
+merger.updateDecalOpacity(decalId, 0.8);
+```
+
+##### `removeDecal(id: string): void`
+
+Remove a decal.
+
+```typescript
+merger.removeDecal(decalId);
+```
+
+##### `getDecals(): DecalInstance[]`
+
+Get all decals.
+
+```typescript
+const decals = merger.getDecals();
+```
+
+##### `getDecalsForModel(modelId: string): DecalInstance[]`
+
+Get decals for a specific model.
+
+```typescript
+const modelDecals = merger.getDecalsForModel(modelId);
+```
+
+##### `getDecal(id: string): DecalInstance | undefined`
+
+Get a specific decal by ID.
+
+```typescript
+const decal = merger.getDecal(decalId);
+```
+
+### Merge Methods
+
 ##### `merge(options?: MergeOptions): Promise<void>`
 
 Merge all models with specified options.
@@ -244,6 +325,32 @@ interface MaterialOverrides {
 
 ```typescript
 type ProgressCallback = (stage: string, progress: number) => void;
+```
+
+#### `DecalInstance`
+
+```typescript
+interface DecalInstance {
+  id: string;
+  textureUrl: string;
+  texture?: THREE.Texture;
+  position: [number, number, number];
+  rotation: [number, number, number];
+  scale: [number, number, number];
+  targetModelId: string;
+  opacity: number;
+}
+```
+
+#### `DecalOptions`
+
+```typescript
+interface DecalOptions {
+  position?: [number, number, number];
+  rotation?: [number, number, number];
+  scale?: [number, number, number];
+  opacity?: number;
+}
 ```
 
 ## Usage with Frameworks

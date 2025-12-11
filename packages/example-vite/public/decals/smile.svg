@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+  <defs>
+    <linearGradient id="smileGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FBBF24"/>
+      <stop offset="100%" style="stop-color:#F59E0B"/>
+    </linearGradient>
+  </defs>
+  <circle cx="128" cy="128" r="100" fill="url(#smileGrad)" stroke="#D97706" stroke-width="4"/>
+  <!-- Eyes -->
+  <circle cx="90" cy="100" r="15" fill="#1F2937"/>
+  <circle cx="166" cy="100" r="15" fill="#1F2937"/>
+  <!-- Smile -->
+  <path d="M70,140 Q128,200 186,140" stroke="#1F2937" stroke-width="10" fill="none" stroke-linecap="round"/>
+</svg>
