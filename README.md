@@ -6,6 +6,10 @@
 
 A TypeScript library for merging multiple 3D GLB files into a single optimized mesh with texture atlas support.
 
+## Demo
+
+![Demo](./assets/demo.gif)
+
 ## Features
 
 - 🎯 **Merge Multiple GLB Files** - Load and combine any number of 3D models
