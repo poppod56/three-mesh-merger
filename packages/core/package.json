@@ -40,10 +40,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/poppod56/three-mesh-merger"
-  },
-  "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
+    "url": "git+https://github.com/poppod56/three-mesh-merger.git"
   },
   "peerDependencies": {
     "three": ">=0.150.0"
