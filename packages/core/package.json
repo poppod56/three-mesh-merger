@@ -42,6 +42,9 @@
     "type": "git",
     "url": "https://github.com/poppod56/three-mesh-merger"
   },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "peerDependencies": {
     "three": ">=0.150.0"
   },
