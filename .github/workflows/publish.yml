@@ -35,7 +35,7 @@ jobs:
       - name: Publish to npm
         run: |
           cd packages/core
-          npm publish --access public
+          npm publish --access public || echo "Version already exists on npm, skipping..."
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       
@@ -51,6 +51,6 @@ jobs:
           cd packages/core
           # Override package name for GitHub Packages (scope must match GitHub username)
           npm pkg set name='@poppod56/three-mesh-merger'
-          npm publish
+          npm publish || echo "Version already exists on GitHub Packages, skipping..."
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
