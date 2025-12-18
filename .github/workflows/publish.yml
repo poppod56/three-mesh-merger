@@ -44,11 +44,13 @@ jobs:
         with:
           node-version: '20'
           registry-url: 'https://npm.pkg.github.com'
-          scope: '@poppod'
+          scope: '@poppod56'
       
       - name: Publish to GitHub Packages
         run: |
           cd packages/core
-          npm publish --registry=https://npm.pkg.github.com
+          # Override package name for GitHub Packages (scope must match GitHub username)
+          npm pkg set name='@poppod56/three-mesh-merger'
+          npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
